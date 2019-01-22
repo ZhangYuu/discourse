@@ -36,7 +36,7 @@
   {{/unless}}
 
   {{#if model.remote_theme}}
-    
+
     {{#if model.remote_theme.remote_url}}
       <a class="remote-url" href="{{model.remote_theme.remote_url}}">{{i18n "admin.customize.theme.source_url"}} {{d-icon "link"}}</a>
     {{/if}}
@@ -46,6 +46,11 @@
     {{#if model.remote_theme.license_url}}
       <a class="url license-url" href="{{model.remote_theme.license_url}}">{{i18n "admin.customize.theme.license"}} {{d-icon "link"}}</a>
     {{/if}}
+
+    {{#if model.description}}
+      <span class="theme-description">{{model.description}}</span>
+    {{/if}}
+
     <span class="metadata">
       {{#if model.remote_theme.authors}}<span class="authors"><span class="heading">{{i18n "admin.customize.theme.authors"}}</span> {{model.remote_theme.authors}}</span>{{/if}}
       {{#if model.remote_theme.theme_version}}<span class="version"><span class="heading">{{i18n "admin.customize.theme.version"}}</span> {{model.remote_theme.theme_version}}</span>{{/if}}

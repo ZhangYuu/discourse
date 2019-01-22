@@ -466,6 +466,8 @@ HTML
     it "can list working theme_translation_manager objects" do
       en_translation = ThemeField.create!(theme_id: theme.id, name: "en", type_id: ThemeField.types[:yaml], target_id: Theme.targets[:translations], value: <<~YAML)
         en:
+          theme_metadata:
+            description: "This is a localised description of my theme\n\nIt can go across multiple lines sometimes"
           group_of_translations:
             translation1: en test1
             translation2: en test2

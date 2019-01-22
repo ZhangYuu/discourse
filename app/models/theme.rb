@@ -372,10 +372,14 @@ class Theme < ActiveRecord::Base
     end
   end
 
-  def translations
+  def internal_translations
+    translations(internal: true)
+  end
+
+  def translations(internal: false)
     fallbacks = I18n.fallbacks[I18n.locale]
     begin
-      data = theme_fields.find_first_locale_fields([id], fallbacks).first&.translation_data(with_overrides: false)
+      data = theme_fields.find_first_locale_fields([id], fallbacks).first&.translation_data(with_overrides: false, internal: internal)
       return {} if data.nil?
       best_translations = {}
       fallbacks.reverse.each do |locale|
