@@ -7,7 +7,6 @@ require_dependency 'theme_translation_parser'
 require_dependency 'theme_translation_manager'
 
 class Theme < ActiveRecord::Base
-
   # TODO: remove in 2019
   self.ignored_columns = ["key"]
 
@@ -21,7 +20,7 @@ class Theme < ActiveRecord::Base
   has_many :child_theme_relation, class_name: 'ChildTheme', foreign_key: 'parent_theme_id', dependent: :destroy
   has_many :child_themes, -> { order(:name) }, through: :child_theme_relation, source: :child_theme
   has_many :color_schemes
-  belongs_to :remote_theme
+  belongs_to :remote_theme, autosave: true
 
   has_one :settings_field, -> { where(target_id: Theme.targets[:settings], name: "yaml") }, class_name: 'ThemeField'
 
@@ -147,6 +146,23 @@ class Theme < ActiveRecord::Base
 
   def default?
     SiteSetting.default_theme_id == id
+  end
+
+  def enabled?
+    enabled = true
+
+    minimum_version = remote_theme&.minimum_discourse_version
+    maximum_version = remote_theme&.maximum_discourse_version
+
+    if minimum_version
+      enabled = false unless Discourse.has_needed_version?(Discourse::VERSION::STRING, minimum_version)
+    end
+
+    if maximum_version
+      enabled = false unless Discourse.has_needed_version?(maximum_version, Discourse::VERSION::STRING)
+    end
+
+    enabled
   end
 
   def component_validations
@@ -281,6 +297,7 @@ class Theme < ActiveRecord::Base
         .where(target_id: [Theme.targets[target], Theme.targets[:common]])
         .where(name: name.to_s)
     end
+    fields = fields.includes(:theme).select { |field| field.theme.enabled? }
 
     fields.each(&:ensure_baked!)
     fields
@@ -433,17 +450,21 @@ class Theme < ActiveRecord::Base
   end
 
   def generate_metadata_hash
-    {
-      name: name,
-      about_url: remote_theme&.about_url,
-      license_url: remote_theme&.license_url,
-      component: component,
-      assets: {}.tap do |hash|
+    {}.tap do |meta|
+      meta[:name] = name
+      meta[:component] = component
+
+      RemoteTheme::METADATA_PROPERTIES.each do |property|
+        meta[property] = remote_theme&.public_send(property)
+      end
+
+      meta[:assets] = {}.tap do |hash|
         theme_fields.where(type_id: ThemeField.types[:theme_upload_var]).each do |field|
           hash[field.name] = "assets/#{field.upload.original_filename}"
         end
-      end,
-      color_schemes: {}.tap do |hash|
+      end
+
+      meta[:color_schemes] = {}.tap do |hash|
         schemes = self.color_schemes
         # The selected color scheme may not belong to the theme, so include it anyway
         schemes = [self.color_scheme] + schemes if self.color_scheme
@@ -451,7 +472,8 @@ class Theme < ActiveRecord::Base
           hash[scheme.name] = {}.tap { |colors| scheme.colors.each { |color| colors[color.name] = color.hex } }
         end
       end
-    }
+
+    end
   end
 end
 

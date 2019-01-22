@@ -45,9 +45,9 @@ class ChildThemeSerializer < ApplicationSerializer
 end
 
 class RemoteThemeSerializer < ApplicationSerializer
-  attributes :id, :remote_url, :remote_version, :local_version, :about_url,
-             :license_url, :commits_behind, :remote_updated_at, :updated_at,
-             :github_diff_link, :last_error_text, :is_git?
+  attributes :id, :remote_url, :remote_version, :local_version, :commits_behind,
+             :remote_updated_at, :updated_at, :github_diff_link, :last_error_text, :is_git?,
+             :license_url, :about_url, :authors, :theme_version, :minimum_discourse_version, :maximum_discourse_version
 
   # wow, AMS has some pretty nutty logic where it tries to find the path here
   # from action dispatch, tell it not to
@@ -61,7 +61,7 @@ class RemoteThemeSerializer < ApplicationSerializer
 end
 
 class ThemeSerializer < ChildThemeSerializer
-  attributes :color_scheme, :color_scheme_id, :user_selectable, :remote_theme_id, :settings, :errors
+  attributes :color_scheme, :color_scheme_id, :user_selectable, :remote_theme_id, :settings, :errors, :enabled?
 
   has_one :user, serializer: UserNameSerializer, embed: :object
 
